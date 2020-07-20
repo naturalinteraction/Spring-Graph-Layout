@@ -13,40 +13,47 @@ int frames = 0;
 int nodes = 0;
 
 // struct to store nodes in the graph
-struct node {
+struct node
+{
     double x, y, force_x, force_y;
     int id;
 };
 
-bool operator<(const node &l, const node &r) {
+bool operator<(const node &l, const node &r)
+{
     return (l.id < r.id);
 }
 
 // struct to store edge information
-struct edge {
+struct edge
+{
     node end;
     double distance, dx, dy;
 };
 
 
-bool operator<(const edge &l, const edge &r) {
+bool operator<(const edge &l, const edge &r)
+{
     return (l.end.id != r.end.id);
 }
 
 
-class graph {
-private:
+class graph
+{
+  public:
+
     std::map<node, std::set<edge>> graph_container;
-public:
 
     // creates a new node
-    void add_node(const node &v) {
+    void add_node(const node &v)
+    {
         std::set<edge> new_set;
         graph_container[v] = new_set;
     }
 
     // adds edge to graph_container vector
-    void add_edge(const node &v, const node &u) {
+    void add_edge(const node &v, const node &u)
+    {
         edge e{};
         e.end = u;
         // calculate distance based on vectors
@@ -57,12 +64,14 @@ public:
     }
 
     // returns graph
-    std::map<node, std::set<edge>> get_graph() const {
+    std::map<node, std::set<edge>> get_graph() const
+    {
         return graph_container;
     }
 
     // update graph
-    void set_graph(std::map<node, std::set<edge>> &g) {
+    void set_graph(std::map<node, std::set<edge>> &g)
+    {
         graph_container = g;
     }
 };
@@ -73,26 +82,30 @@ public:
  * edge in the graph and updates the values stored in the respective
  * nodes
  */
-void calc_force(graph &g) {
+void calc_force(graph &g)
+{
     std::map<node, std::set<edge>> map = g.get_graph();
     std::map<node, std::set<edge>> new_map;
     // TODO: try adding MPI to further improve performance
     //loop through each node in graph
     #pragma omp parallel for
-    for (auto it : map) {
+    for (auto it : map)
+    {
         double coulomb_x = 0.0, coulomb_y = 0.0;
         double hook_x = 0.0, hook_y = 0.0;
 
         //get hook forces for each edge
         #pragma omp parallel for reduction(+:hook_x, hook_y)
-        for (const auto &it2 : it.second) {
+        for (const auto &it2 : it.second)
+        {
             hook_x += 1.0 * (sqrt(it2.distance) - 2.0) * (it2.dx / sqrt(it2.distance));
             hook_y += 1.0 * (sqrt(it2.distance) - 2.0) * (it2.dy / sqrt(it2.distance));
         }
 
         //get coulomb forces for all other nodes
         #pragma omp parallel for reduction(+:coulomb_x, coulomb_y)
-        for (auto &it3 : map) {
+        for (auto &it3 : map)
+        {
             double dx = 0.0, dy = 0.0, dist = 0.0;
             //don't consider self
             if (it3.first.id != it.first.id) {
@@ -121,12 +134,14 @@ void calc_force(graph &g) {
  * on a constant factor which can be modified to change
  * the momentum of the graph
  */
-void move(graph &g) {
+void move(graph &g)
+{
     std::map<node, std::set<edge>> map = g.get_graph();
     std::map<node, std::set<edge>> new_map;
 
     #pragma omp parallel for
-    for (auto &it : map) {
+    for (auto &it : map)
+    {
         node n{};
         n.id = it.first.id;
         n.x = it.first.x + 0.05 * it.first.force_x;
@@ -141,7 +156,8 @@ void move(graph &g) {
  * For each edge in the graph update the distance information
  * after the nodes have been moved for quick access later
  */
-void update_edges(graph &g) {
+void update_edges(graph &g)
+{
     std::map<node, std::set<edge>> map = g.get_graph();
     graph g_temp;
 
@@ -161,7 +177,8 @@ void update_edges(graph &g) {
  * Write the current graph to file labelled based on the
  * number of movement iterations
  */
-void output_graph(const graph &g, int i) {
+void output_graph(const graph &g, int i)
+{
     std::ostringstream filename;
     filename << i << ".out";
     std::string file = filename.str();
@@ -180,10 +197,12 @@ void output_graph(const graph &g, int i) {
  * For the number of frames specified move the nodes,
  * and print the new locations
  */
-int balance_graph(graph &g) {
+int balance_graph(graph &g)
+{
     int i = 0;
 
-    while (i < frames) {
+    while (i < frames)
+    {
         move(g);
         update_edges(g);
         calc_force(g);
@@ -193,14 +212,10 @@ int balance_graph(graph &g) {
     return 0;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     std::string line, file;
     std::string::size_type sz;
-    std::clock_t start;
-    double duration;
-
-    // track running time
-    start = std::clock();
 
     int i = 0, j = 0;
 
@@ -217,7 +232,8 @@ int main(int argc, char **argv) {
 
     // read in test file
     if (myfile.is_open()) {
-        while (getline(myfile, line)) {
+        while (getline(myfile, line))
+        {
             if (i == 0) {
                 frames = stoi(line);
             } else if (i == 1) {
@@ -260,10 +276,6 @@ int main(int argc, char **argv) {
     //calculate initial forces
     calc_force(g);
     int temp = balance_graph(g);
-
-    duration = (std::clock() - start) / (double) CLOCKS_PER_SEC;
-    // print running time
-    std::cout << "printf: " << duration << '\n';
 
     return temp;
 }
