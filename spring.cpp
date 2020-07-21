@@ -144,8 +144,8 @@ void move(graph &g)
     {
         node n{};
         n.id = it.first.id;
-        n.x = it.first.x + 0.05 * it.first.force_x;
-        n.y = it.first.y + 0.05 * it.first.force_y;
+        n.x = it.first.x + 0.005 * it.first.force_x;
+        n.y = it.first.y + 0.005 * it.first.force_y;
         new_map[n] = it.second;
     }
 

@@ -10,7 +10,7 @@ def gen_frames():
     nodes = int(input('Nodes:'))
     edges = int(input('Edges:'))
 
-    with open('test_n' + str(nodes) + '_f' + str(frames) + '_e' + str(edges), 'w') as f:
+    with open('test', 'w') as f:
         f.write(str(frames) + '\n')
         f.write(str(nodes) + '\n')
         # generate the initial coordinates of the graph
