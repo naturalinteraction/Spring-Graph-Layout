@@ -144,8 +144,8 @@ void move(graph &g)
     {
         node n{};
         n.id = it.first.id;
-        n.x = it.first.x + 0.005 * it.first.force_x;
-        n.y = it.first.y + 0.005 * it.first.force_y;
+        n.x = it.first.x + 0.01 * it.first.force_x;
+        n.y = it.first.y + 0.01 * it.first.force_y;
         new_map[n] = it.second;
     }
 
@@ -214,63 +214,33 @@ int balance_graph(graph &g)
 
 int main(int argc, char **argv)
 {
-    std::string line, file;
-    std::string::size_type sz;
-
-    int i = 0, j = 0;
-
-    if ((argc <= 1) || (argv[argc - 1] == nullptr) || (argv[argc - 1][0] == '-') || (argc > 2)) {
-        std::cerr << "Usage: sprint input_file" << std::endl;
-        return 1;
-    }
-
-
-    file = argv[argc - 1];
-
-    std::ifstream myfile(file);
     graph g;
 
-    // read in test file
-    if (myfile.is_open()) {
-        while (getline(myfile, line))
-        {
-            if (i == 0) {
-                frames = stoi(line);
-            } else if (i == 1) {
-                nodes = stoi(line);
-            } else if (i <= nodes + 1) {
-                // get locations of all the nodes
-                node n{};
-                n.x = std::stof(line, &sz);
-                n.y = std::stof(line.substr(sz));
+    frames = 100;
+    nodes = 50;
 
-                n.id = i - 2;
-                g.add_node(n);
-            } else {
-                // get all edge information
-                node temp{};
+    for (int fn = 0; fn < nodes; fn++)
+    {
+        node n{};
+        n.x = rand() % 700;
+        n.y = rand() % 700;
 
-                std::stringstream parse(line);
+        n.id = fn;
+        g.add_node(n);
+    }
 
-                temp.id = i - nodes - 2;
+    for (int fn = 0; fn < nodes; fn++)
+    {
+        node temp{};
+        temp.id = rand() % nodes;
+        auto it = g.get_graph().find(temp);
+        temp = it->first;
 
-                auto it = g.get_graph().find(temp);
-
-                temp = it->first;
-                // get all edges in line
-                while (parse >> j) {
-                    node temp2{};
-                    temp2.id = j;
-                    auto it2 = g.get_graph().find(temp2);
-                    temp2 = it2->first;
-                    g.add_edge(temp, temp2);
-                }
-            }
-            i++;
-        }
-        myfile.close();
-    } else {
-        std::cout << "Unable to open file";
+        node temp2{};
+        temp2.id = rand() % nodes;
+        auto it2 = g.get_graph().find(temp2);
+        temp2 = it2->first;
+        g.add_edge(temp, temp2);
     }
 
     //calculate initial forces
